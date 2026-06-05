@@ -9,14 +9,12 @@ from workers import WorkerEntrypoint, Response, fetch as cf_fetch
 
 
 def _date_range():
-    """获取本周日期范围字符串"""
     today = datetime.now()
     week_ago = today - timedelta(days=7)
     return f"{week_ago.strftime('%Y年%m月%d日')} -- {today.strftime('%Y年%m月%d日')}"
 
 
 def _read_prompt():
-    """读取捆绑的 prompt.txt"""
     try:
         with open("prompt.txt", "r", encoding="utf-8") as f:
             return f.read()
@@ -24,8 +22,7 @@ def _read_prompt():
         return ""
 
 
-def _clean_html(raw: str) -> str:
-    """去掉 AI 可能返回的 markdown 代码块包裹"""
+def _clean_html(raw):
     content = raw.strip()
     if content.startswith("```html"):
         content = content[7:]
@@ -37,8 +34,7 @@ def _clean_html(raw: str) -> str:
 
 
 class Default(WorkerEntrypoint):
-    async def fetch(self, request):
-        """HTTP 请求处理 — 返回最新周报 HTML"""
+    async def on_fetch(self, request):
         try:
             html = await self.env.REPORT_KV.get("latest")
         except Exception:
@@ -59,8 +55,7 @@ class Default(WorkerEntrypoint):
             headers={"Content-Type": "text/html; charset=utf-8"},
         )
 
-    async def scheduled(self, controller, env, ctx):
-        """定时触发 — 每周五 UTC 2:00 (北京时间 10:00)"""
+    async def on_scheduled(self, controller, env, ctx):
         api_key = env.DEEPSEEK_API_KEY
         system_prompt = _read_prompt()
         date_range = _date_range()

@@ -8,11 +8,11 @@ import os
 import sys
 import argparse
 from datetime import datetime, timedelta
-from openai import OpenAI
 
 # === 配置 ===
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
-PROMPT_FILE = os.path.join(PROJECT_DIR, "prompt.txt")
+PARENT_DIR = os.path.dirname(PROJECT_DIR)
+PROMPT_FILE = os.path.join(PARENT_DIR, "prompt.txt")
 REPORTS_DIR = os.path.join(PROJECT_DIR, "reports")
 API_BASE_URL = "https://api.deepseek.com/v1"
 MODEL = "deepseek-chat"
@@ -47,6 +47,8 @@ def clean_html(raw: str) -> str:
 
 def generate_report(api_key: str) -> str:
     """调用 DeepSeek API 生成周报 HTML"""
+    from openai import OpenAI  # 延迟导入，避免在 Workers 运行时中崩溃
+
     system_prompt = load_prompt()
     date_range = get_date_range()
 
