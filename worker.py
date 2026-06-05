@@ -55,8 +55,8 @@ class Default(WorkerEntrypoint):
             headers={"Content-Type": "text/html; charset=utf-8"},
         )
 
-    async def on_scheduled(self, controller, env, ctx):
-        api_key = env.DEEPSEEK_API_KEY
+    async def scheduled(self, controller, env, ctx):
+        api_key = self.env.DEEPSEEK_API_KEY
         system_prompt = _read_prompt()
         date_range = _date_range()
 
@@ -74,14 +74,15 @@ class Default(WorkerEntrypoint):
         })
 
         try:
-            resp = await cf_fetch("https://api.deepseek.com/v1/chat/completions", {
-                "method": "POST",
-                "headers": {
+            resp = await cf_fetch(
+                "https://api.deepseek.com/v1/chat/completions",
+                method="POST",
+                headers={
                     "Content-Type": "application/json",
                     "Authorization": f"Bearer {api_key}",
                 },
-                "body": body,
-            })
+                body=body,
+            )
 
             if resp.status != 200:
                 error_text = await resp.text()
@@ -92,7 +93,7 @@ class Default(WorkerEntrypoint):
             raw = data["choices"][0]["message"]["content"]
             html = _clean_html(raw)
 
-            await env.REPORT_KV.put("latest", html)
+            await self.env.REPORT_KV.put("latest", html)
             print(f"[OK] Report generated for {date_range}")
         except Exception as e:
             print(f"[ERR] {e}")
